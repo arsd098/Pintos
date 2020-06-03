@@ -1,0 +1,57 @@
+#ifndef VM_PAGE_H
+#define VM_PAGE_H
+
+#include <hash.h> 
+/* Added Header file */
+#include <stdbool.h>              // For using boolean type
+
+#define VM_BIN   0
+#define VM_FILE  1
+#define VM_ANON  2
+
+#define EXIT_PROCESS 9999
+
+/* Structure of vm_entry */
+struct vm_entry
+{
+  uint8_t type;       /* Type : VM_BIN, VM_FILE, VM_ANON */
+  void *vaddr;        /* Virtual page number*/
+  bool writable;      /* Flag indicating whether write is possible */
+  bool is_loaded;     /* Flag indicating whether physical memory is
+                         successfully loaded */
+  struct file *file;  /* File mapped with virtual address */
+
+  /* For memory mapped file */
+  struct list_elem mmap_elem;  /* Element of mmap list */
+
+  size_t offset;          /* Offset of file to be read */
+  size_t read_bytes;      /* Size of data written on virtual page */ 
+  size_t zero_bytes;      /* The remaining page bytes to be filled with 0 */
+  
+  /* For swapping */
+  size_t swap_slot;       /* slot of swap */
+
+  struct hash_elem elem;  /* Element of hash_table */
+};
+
+/* Structure of mmap_file */
+struct mmap_file
+{
+  int mapid;                   /* ID of mapping */
+  struct file* file;           /* Mapped file */
+  struct list_elem elem;       /* For connection of mmap_file */
+  struct list vme_list;        /* All vm_entry corresponding mmap_file */
+};
+
+
+
+/* Added function */
+/* For virtual memory */
+void vm_init (struct hash *vm);
+bool insert_vme (struct hash *vm, struct vm_entry *vme);
+bool delete_vme (struct hash *vm, struct vm_entry *vme);
+struct vm_entry *find_vme (void *vaddr);
+void vm_destroy (struct hash *vm);
+bool load_file (void *kaddr, struct vm_entry *vme);
+
+#endif /* vm/page.h */
